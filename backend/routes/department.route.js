@@ -1,6 +1,7 @@
 import express from "express";
 import {
     activateDepartment,
+  assignHeadOfDepartment,
   createDepartment,
   deleteDepartment,
   getAllDepartments,
@@ -52,5 +53,10 @@ router.patch("/:id/activate", validateObjectId, activateDepartment);
 // @desc get staff detail of a specific dept (admin only)
 // @access Private/Admin
 router.get("/:id/staff", validateObjectId, getDepartmentStaff);
+
+// @route PATCH /api/department/:id
+// @desc set a HOD (admin only)
+// @access Private/Admin
+router.patch("/:id/head", validateObjectId, assignHeadOfDepartment);
 
 export default router;

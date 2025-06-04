@@ -57,6 +57,10 @@ const patientSchema = new mongoose.Schema(
         "Please enter a valid email address.",
       ],
     },
+    linkedAuthId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     address: {
       type: String,
       required: true,
@@ -66,7 +70,18 @@ const patientSchema = new mongoose.Schema(
       required: true,
     },
     medicalHistory: {
-      type: [String],
+      type: [
+        {
+          documentUrl: { type: String, required: true, trim: true },
+          documentType: {
+            type: String,
+            enum: ["pdf", "image"],
+            required: true,
+          },
+          description: { type: String, trim: true, default: "" },
+          uploadedAt: { type: Date, default: Date.now },
+        },
+      ],
       default: [],
     },
     currentStatus: {
@@ -77,6 +92,9 @@ const patientSchema = new mongoose.Schema(
         "discharged",
         "under observation",
         "critical",
+        "awaiting diagnosis",
+        "stable",
+        "recovering",
       ],
       default: "registered",
     },
@@ -88,8 +106,11 @@ const patientSchema = new mongoose.Schema(
             "registered",
             "admitted",
             "discharged",
+            "awaiting diagnosis",
+            "stable",
             "under observation",
             "critical",
+            "recovering",
           ],
           required: true,
           default: "registered",

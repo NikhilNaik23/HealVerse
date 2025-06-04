@@ -3,40 +3,20 @@ import mongoose from "mongoose";
 import { departmentValidationSchema } from "../validations/department.validation.js";
 import { hospitalValidationSchema } from "../validations/hospital.validation.js";
 import { staffValidationSchema } from "../validations/staff.validation.js";
-import { doctorValidationSchema } from "../validations/doctorValidationSchema.js";
+import { doctorValidationSchema } from "../validations/doctor.validation.js";
+import { assignDepartmentValidationSchema } from "../validations/assignDepartment.validation.js";
+import { patientAdminRegisterSchema, patientSelfRegisterSchema } from "../validations/patient.validation.js";
+import { appointmentValidationSchema } from "../validations/appointment.validation.js";
 
-export const validateHospital = async (req, res, next) => {
-  const { error } = hospitalValidationSchema.validate(req.body, {
-    abortEarly: false,
-  });
+const createValidationMiddleware = (schema) => (req, res, next) => {
+  const { error } = schema.validate(req.body, { abortEarly: false });
   if (error) {
-    const errors = error.details.map((detail) => detail.message);
+    const errors = error.details.map((d) => d.message);
     return res.status(400).json({ errors });
   }
   next();
 };
 
-export const validateStaff = async (req, res, next) => {
-  const { error } = staffValidationSchema.validate(req.body, {
-    abortEarly: false,
-  });
-  if (error) {
-    const errors = error.details.map((detail) => detail.message);
-    return res.status(400).json({ errors });
-  }
-  next();
-};
-
-export const validateDepartment = async (req, res, next) => {
-  const { error } = departmentValidationSchema.validate(req.body, {
-    abortEarly: false,
-  });
-  if (error) {
-    const errors = error.details.map((detail) => detail.message);
-    return res.status(400).json({ errors });
-  }
-  next();
-};
 export const validateObjectId = (req, res, next) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -45,13 +25,12 @@ export const validateObjectId = (req, res, next) => {
   next();
 };
 
-export const validateDoctor = (req, res, next) => {
-  const { error } = doctorValidationSchema.validate(req.body, {
-    abortEarly: false,
-  });
-  if (error) {
-    const messages = error.details.map((d) => d.message);
-    return res.status(400).json({ errors: messages });
-  }
-  next();
-};
+
+export const validateHospital = createValidationMiddleware(hospitalValidationSchema);
+export const validateStaff = createValidationMiddleware(staffValidationSchema);
+export const validateDepartment = createValidationMiddleware(departmentValidationSchema);
+export const validateAssignDepartment = createValidationMiddleware(assignDepartmentValidationSchema);
+export const validateDoctor = createValidationMiddleware(doctorValidationSchema);
+export const validatePatientSelfRegister = createValidationMiddleware(patientSelfRegisterSchema);
+export const validatePatientAdminRegister = createValidationMiddleware(patientAdminRegisterSchema);
+export const validateAppointment= createValidationMiddleware(appointmentValidationSchema)

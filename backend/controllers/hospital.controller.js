@@ -44,7 +44,7 @@ export const getHospitals = async (req, res) => {
     if (hospitals.length === 0) {
       return res.status(200).json({ message: "No hospitals are found", hospitals: [] });
     }
-    return res.status(200).json({ message: "Hospitals fetched successfully", hospitals });
+    return res.status(200).json({ message: "Hospitals fetched successfully",hospitalCount:hospitals.length, hospitals });
   } catch (error) {
     console.error("getHospitals Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });

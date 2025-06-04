@@ -32,7 +32,7 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       enum: ["scheduled", "completed", "cancelled"],
       required: true,
-      default:"Scheduled"
+      default:"scheduled"
     },
     reason: {
       type: String,

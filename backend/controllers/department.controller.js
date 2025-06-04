@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Department from "../models/department.model.js";
+import Staff from "../models/staff.model.js";
+import Hospital from "../models/hospital.model.js";
 
 const escapeRegex = (str) => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 
@@ -12,15 +14,52 @@ export const createDepartment = async (req, res) => {
     numberOfBeds = null,
     staffList = [],
     hospitalId,
+    specializations,
   } = req.body;
+  if (
+    !specializations ||
+    !Array.isArray(specializations) ||
+    specializations.length === 0
+  ) {
+    return res.status(400).json({
+      message: "Specializations are required and must be a non-empty array",
+    });
+  }
 
   try {
+    const hospital = await Hospital.findById(hospitalId);
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
     const existingDepartment = await Department.findOne({
-      name: new RegExp(`^${name}$`, "i"),
+      name: new RegExp(`^${escapeRegex(name)}$`, "i"),
     });
 
     if (existingDepartment) {
       return res.status(409).json({ message: "Department already exists" });
+    }
+    if (headOfDepartment) {
+      const hodExists = await Staff.findOne({
+        _id: headOfDepartment,
+        isActive: true,
+      });
+      if (!hodExists) {
+        return res
+          .status(400)
+          .json({ message: "Invalid or inactive Head of Department" });
+      }
+    }
+
+    if (staffList.length > 0) {
+      const staffCount = await Staff.countDocuments({
+        _id: { $in: staffList },
+        isActive: true,
+      });
+      if (staffCount !== staffList.length) {
+        return res.status(400).json({
+          message: "One or more staff members are invalid or inactive",
+        });
+      }
     }
 
     const department = await Department.create({
@@ -31,6 +70,7 @@ export const createDepartment = async (req, res) => {
       floor: floor,
       numberOfBeds: numberOfBeds,
       staffList,
+      specializations,
     });
 
     return res.status(201).json({
@@ -52,7 +92,7 @@ export const getAllDepartments = async (req, res) => {
   try {
     const filters = { isActive: true };
 
-    const { floor, headOfDepartment, name } = req.query;
+    const { floor, headOfDepartment, name, specialization } = req.query;
 
     if (floor) {
       filters.floor = Number(floor);
@@ -66,8 +106,15 @@ export const getAllDepartments = async (req, res) => {
       filters.name = new RegExp(escapeRegex(name), "i");
     }
 
+    if (specialization) {
+      filters.specializations = {
+        $regex: new RegExp(escapeRegex(specialization), "i"),
+      };
+    }
+
     const departments = await Department.find(filters)
       .select("-staffList -numberOfBeds")
+      .populate("headOfDepartment", "name role")
       .sort({ createdAt: -1 });
 
     if (!departments || departments.length === 0) {
@@ -76,9 +123,17 @@ export const getAllDepartments = async (req, res) => {
         .json({ message: "No department found", departments: [] });
     }
 
-    res
-      .status(200)
-      .json({ message: "Departments fetched successfully", departments });
+    const departmentsWithHod = departments.map((dept) => {
+      const deptObj = dept.toObject();
+      deptObj.headOfDepartment = deptObj.headOfDepartment || "Not Assigned";
+      return deptObj;
+    });
+
+    res.status(200).json({
+      message: "Departments fetched successfully",
+      departmentCount: departmentsWithHod.length,
+      departments: departmentsWithHod,
+    });
   } catch (error) {
     console.error("getAllDepartments Error:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -93,8 +148,8 @@ export const getDepartmentById = async (req, res) => {
     }
 
     const department = await Department.findOne({ _id: id, isActive: true })
-      .populate("hospitalId", "name address") // Populates hospital name and address
-      .populate("headOfDepartment", "name role"); // Populates headOfDepartment's name and role
+      .populate("hospitalId", "name address")
+      .populate("headOfDepartment", "name role");
 
     if (!department) {
       return res.status(404).json({ message: "Department not found " });
@@ -114,24 +169,49 @@ export const updateDepartment = async (req, res) => {
     floor,
     numberOfBeds,
     staffList = [],
+    specializations,
   } = req.body;
   const { id } = req.params;
-
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid department ID" });
     }
 
-    // Check if new name exists on another department (case-insensitive)
     if (name) {
       const existingDept = await Department.findOne({
-        _id: { $ne: id }, // exclude current
+        _id: { $ne: id },
         name: new RegExp(`^${escapeRegex(name)}$`, "i"),
       });
       if (existingDept) {
         return res
           .status(409)
           .json({ message: "Department name already in use" });
+      }
+    }
+
+    if (headOfDepartment !== undefined && headOfDepartment !== null) {
+      const hodExists = await Staff.findOne({
+        _id: headOfDepartment,
+        isActive: true,
+      });
+      if (!hodExists) {
+        return res
+          .status(400)
+          .json({ message: "Invalid or inactive Head of Department" });
+      }
+    }
+
+    if (staffList !== undefined && staffList.length > 0) {
+      const staffCount = await Staff.countDocuments({
+        _id: { $in: staffList },
+        isActive: true,
+      });
+      if (staffCount !== staffList.length) {
+        return res
+          .status(400)
+          .json({
+            message: "One or more staff members are invalid or inactive",
+          });
       }
     }
 
@@ -143,7 +223,8 @@ export const updateDepartment = async (req, res) => {
     if (floor !== undefined) updateFields.floor = floor;
     if (numberOfBeds !== undefined) updateFields.numberOfBeds = numberOfBeds;
     if (staffList !== undefined) updateFields.staffList = staffList;
-
+    if (specializations !== undefined)
+      updateFields.specializations = specializations;
 
     const updatedDepartment = await Department.findByIdAndUpdate(
       id,
@@ -233,15 +314,11 @@ export const getDepartmentStaff = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid department ID" });
     }
-    const department = await Department.findOne({
-      _id: id,
-      isActive: true,
-    }).populate("staffList", "name role email");
-    if (!department) {
-      return res.status(404).json({ message: "Department not found" });
-    }
 
-    const staff = department.staffList;
+    const staff = await Staff.find({ departmentId: id, isActive: true }).select(
+      "name role email"
+    );
+
     const msg =
       staff.length === 0
         ? "No staff members found"
@@ -256,12 +333,18 @@ export const getDepartmentStaff = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 export const getDepartmentsByHospital = async (req, res) => {
   const { id } = req.params;
 
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid Hospital ID" });
+    }
+
+    const hospitalExists = await Hospital.exists({ _id: id });
+    if (!hospitalExists) {
+      return res.status(404).json({ message: "Hospital not found" });
     }
 
     const departments = await Department.find({
@@ -286,6 +369,67 @@ export const getDepartmentsByHospital = async (req, res) => {
     });
   } catch (error) {
     console.error("getDepartmentsByHospital Error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const assignHeadOfDepartment = async (req, res) => {
+  const { id } = req.params;
+  const { staffId } = req.body;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid Department ID" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(staffId)) {
+      return res.status(400).json({ message: "Invalid Staff ID" });
+    }
+
+    const department = await Department.findOne({
+      _id: id,
+      isActive: true,
+    }).select("-floor -numberOfBeds -isActive -deletedAt -staffList");
+    if (!department) {
+      return res
+        .status(404)
+        .json({ message: "Department does not exist or is inactive" });
+    }
+    if (department.headOfDepartment?.toString() === staffId) {
+      return res.status(400).json({
+        message: "This staff member is already assigned as Head of Department",
+      });
+    }
+
+    const staff = await Staff.findOne({
+      _id: staffId,
+      isActive: true,
+    }).populate("departmentId", "name");
+    if (!staff) {
+      return res
+        .status(404)
+        .json({ message: "Staff does not exist or is inactive" });
+    }
+    if (staff.role !== "doctor") {
+      return res.status(400).json({
+        message: "Only doctors can be assigned as Head of Department",
+      });
+    }
+    if (staff.departmentId.name !== department.name) {
+      return res.status(400).json({
+        message:
+          "Staff member must belong to the same department to be assigned as Head of Department",
+      });
+    }
+
+    if (staff.departmentId) department.headOfDepartment = staffId;
+    await department.save();
+
+    await department.populate("headOfDepartment", "name role");
+
+    return res
+      .status(200)
+      .json({ message: "HOD assigned successfully", department });
+  } catch (error) {
+    console.error("assignHeadOfDepartment Error:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

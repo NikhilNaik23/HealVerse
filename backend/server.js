@@ -6,6 +6,9 @@ import authRoute from "./routes/auth.route.js";
 import hospitalRoute from "./routes/hospital.route.js";
 import staffRoute from "./routes/staff.route.js";
 import departmentRoute from "./routes/department.route.js";
+import doctorRoute from "./routes/doctor.route.js";
+import patientRoute from "./routes/patient.route.js";
+import appointmentRoute from "./routes/appointment.route.js";
 
 dotenv.config();
 
@@ -19,6 +22,9 @@ app.use("/api/", authRoute);
 app.use("/api/hospital/", hospitalRoute);
 app.use("/api/staff/", staffRoute);
 app.use("/api/department/", departmentRoute);
+app.use("/api/doctor/", doctorRoute);
+app.use("/api/patient/", patientRoute);
+app.use("/api/appointment/", appointmentRoute);
 
 app.listen(PORT, () => {
   console.log(`The app is running at http://localhost:${PORT}`);

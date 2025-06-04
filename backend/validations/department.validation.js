@@ -9,6 +9,48 @@ const objectId = Joi.string().custom((value, helpers) => {
   return value;
 }, "ObjectId Validation");
 
+const validSpecializations = [
+  "general_practitioner",
+  "internist",
+  "pediatrician",
+  "cardiologist",
+  "cardiothoracic_surgeon",
+  "neurologist",
+  "neurosurgeon",
+  "orthopedic_surgeon",
+  "plastic_surgeon",
+  "general_surgeon",
+  "vascular_surgeon",
+  "urologist",
+  "dermatologist",
+  "psychiatrist",
+  "radiologist",
+  "anesthesiologist",
+  "emergency_medicine",
+  "endocrinologist",
+  "gastroenterologist",
+  "hematologist",
+  "immunologist",
+  "nephrologist",
+  "obstetrician_gynecologist",
+  "oncologist",
+  "ophthalmologist",
+  "otolaryngologist",
+  "pathologist",
+  "pulmonologist",
+  "rheumatologist",
+  "sports_medicine",
+  "family_medicine",
+  "physical_medicine_rehabilitation",
+  "preventive_medicine",
+  "critical_care_medicine",
+  "addiction_medicine",
+  "palliative_care",
+  "sleep_medicine",
+  "clinical_geneticist",
+  "occupational_medicine",
+];
+
 export const departmentValidationSchema = Joi.object({
   name: Joi.string().trim().required().messages({
     "string.base": "Name must be a string",
@@ -45,4 +87,14 @@ export const departmentValidationSchema = Joi.object({
   staffList: Joi.array().items(objectId).min(0).optional().messages({
     "any.invalid": "Staff list contains an invalid ObjectId",
   }),
+  specializations: Joi.array()
+  .items(Joi.string().valid(...validSpecializations))
+  .min(1)
+  .required()
+  .messages({
+    "any.only": "One or more specializations are invalid",
+    "array.min": "At least one specialization must be selected",
+    "any.required": "Specializations field is required",
+  }),
+
 });

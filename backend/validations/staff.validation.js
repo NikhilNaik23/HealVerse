@@ -28,7 +28,8 @@ export const staffValidationSchema = Joi.object({
     .messages({
       "string.pattern.base":
         "Phone number must start with 6, 7, 8, or 9 and be exactly 10 digits",
-    }),
+    })
+    .optional(),
 
   address: Joi.string().trim().optional(),
 
@@ -70,7 +71,10 @@ export const staffValidationSchema = Joi.object({
 
   salary: Joi.number().positive().optional(),
 
-  dateOfJoining: Joi.date().iso().optional(),
+  dateOfJoining: Joi.date()
+    .iso()
+    .optional()
+    .default(() => new Date()),
 
   isActive: Joi.boolean().optional().default(true),
 
@@ -88,8 +92,27 @@ export const staffValidationSchema = Joi.object({
       .min(1)
       .required()
       .messages({
-        "array.includes": "Invalid day provided",
+        "array.includes":
+          "Days must be valid weekday abbreviations (Mon, Tue, Wed, Thu, Fri, Sat, Sun).",
         "any.required": "Days are required",
       }),
-  }).optional(),
+  })
+    .optional()
+    .custom((value, helpers) => {
+      const [startHour, startMin] = value.start.split(":").map(Number);
+      const [endHour, endMin] = value.end.split(":").map(Number);
+
+      const startTotalMins = startHour * 60 + startMin;
+      let endTotalMins = endHour * 60 + endMin;
+
+      if (endTotalMins <= startTotalMins) {
+        endTotalMins += 24 * 60; 
+      }
+
+      if (endTotalMins <= startTotalMins) {
+        return helpers.message("End time must be after start time");
+      }
+
+      return value;
+    }, "Working Hours Logical Validation"),
 });

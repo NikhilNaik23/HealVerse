@@ -17,7 +17,7 @@ const emergencyPatientSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      trim:true,
+      trim: true,
       match: [
         /^[6-9]\d{9}$/,
         "Phone number must start with 6, 7, 8, or 9 and be exactly 10 digits long.",
