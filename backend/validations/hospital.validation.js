@@ -15,7 +15,7 @@ export const hospitalValidationSchema = Joi.object({
           "Phone number must be exactly 10 digits and start with 6, 7, 8, or 9.",
         "string.empty": "Phone number is required.",
       }),
-    email: Joi.string().email().required().messages({
+    email: Joi.string().email().required().lowercase().messages({
       "string.email": "Please enter a valid email address",
       "string.empty": "Email is required",
     }),

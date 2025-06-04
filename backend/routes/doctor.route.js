@@ -5,6 +5,7 @@ import {
   getAllDoctors,
   getAvailableDoctors,
   getDoctorById,
+  getDoctorByStaffId,
   updateDoctor,
 } from "../controllers/doctor.controller.js";
 import {
@@ -27,6 +28,11 @@ router.get("/", getAllDoctors);
 // @desc get all available doctors (admin, receptionist)
 // @access Receptionist/Admin/Private
 router.get("/available", getAvailableDoctors);
+
+// @route GET /api/doctor/:id/staff
+// @desc get a doctor by staff id (admin only)
+// @access Admin/Private
+router.get("/:id/staff", validateObjectId, getDoctorByStaffId);
 
 // @route GET /api/doctor/:id
 // @desc get a specific doctor (admin, receptionist)

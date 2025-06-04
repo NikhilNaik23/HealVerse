@@ -7,6 +7,8 @@ import { doctorValidationSchema } from "../validations/doctor.validation.js";
 import { assignDepartmentValidationSchema } from "../validations/assignDepartment.validation.js";
 import { patientAdminRegisterSchema, patientSelfRegisterSchema } from "../validations/patient.validation.js";
 import { appointmentValidationSchema } from "../validations/appointment.validation.js";
+import { authValidationSchema, staffRegisterValidationSchema } from "../validations/auth.validation.js";
+import { setPasswordValidationSchema } from "../validations/setPassword.validation.js";
 
 const createValidationMiddleware = (schema) => (req, res, next) => {
   const { error } = schema.validate(req.body, { abortEarly: false });
@@ -34,3 +36,6 @@ export const validateDoctor = createValidationMiddleware(doctorValidationSchema)
 export const validatePatientSelfRegister = createValidationMiddleware(patientSelfRegisterSchema);
 export const validatePatientAdminRegister = createValidationMiddleware(patientAdminRegisterSchema);
 export const validateAppointment= createValidationMiddleware(appointmentValidationSchema)
+export const validateAuth= createValidationMiddleware(authValidationSchema)
+export const validateRegisterForStaff= createValidationMiddleware(staffRegisterValidationSchema)
+export const validateSetPassword= createValidationMiddleware(setPasswordValidationSchema)

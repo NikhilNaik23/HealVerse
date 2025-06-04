@@ -52,6 +52,7 @@ const patientSchema = new mongoose.Schema(
       required: true,
       trim: true,
       unique: true,
+      lowercase: true,
       match: [
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         "Please enter a valid email address.",
@@ -59,6 +60,7 @@ const patientSchema = new mongoose.Schema(
     },
     linkedAuthId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
       default: null,
     },
     address: {

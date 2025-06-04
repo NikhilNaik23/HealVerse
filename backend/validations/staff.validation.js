@@ -18,7 +18,7 @@ export const staffValidationSchema = Joi.object({
     "string.empty": "Name is required",
   }),
 
-  email: Joi.string().trim().email().required().messages({
+  email: Joi.string().trim().email().required().lowercase().messages({
     "string.email": "Invalid email format",
     "any.required": "Email is required",
   }),

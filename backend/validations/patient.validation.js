@@ -50,10 +50,18 @@ export const patientSelfRegisterSchema = Joi.object({
         "Phone number must start with 6, 7, 8, or 9 and be exactly 10 digits",
       "string.empty": "Phone number is required",
     }),
-  email: Joi.string().email().required().trim().messages({
+  email: Joi.string().email().required().trim().lowercase().messages({
     "string.email": "Invalid email format",
     "any.required": "Email is required",
   }),
+  password: Joi.string()
+    .min(8)
+    .required()
+    .messages({
+      "string.base": "Password must be a string",
+      "string.min": "Password must be at least 8 characters",
+      "any.required": "Password is required",
+    }),
   linkedAuthId: objectId.optional().allow(null).messages({
     "any.invalid": "Invalid Auth ID",
   }),
@@ -75,8 +83,7 @@ export const patientSelfRegisterSchema = Joi.object({
           .valid("pdf", "image")
           .required()
           .messages({
-            "any.only":
-              "Document type must be one of pdf, image",
+            "any.only": "Document type must be one of pdf, image",
             "any.required": "Document type is required",
           }),
         description: Joi.string().trim().allow("").optional(),
@@ -85,6 +92,7 @@ export const patientSelfRegisterSchema = Joi.object({
     )
     .default([]),
 });
+
 
 export const patientAdminRegisterSchema = Joi.object({
   name: Joi.string().trim().required().messages({
