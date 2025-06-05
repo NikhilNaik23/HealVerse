@@ -22,21 +22,21 @@ export const createDepartment = async (req, res) => {
     specializations.length === 0
   ) {
     return res.status(400).json({
-      message: "Specializations are required and must be a non-empty array",
+      error: "Specializations are required and must be a non-empty array",
     });
   }
 
   try {
     const hospital = await Hospital.findById(hospitalId);
     if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found" });
+      return res.status(404).json({ error: "Hospital not found" });
     }
     const existingDepartment = await Department.findOne({
       name: new RegExp(`^${escapeRegex(name)}$`, "i"),
     });
 
     if (existingDepartment) {
-      return res.status(409).json({ message: "Department already exists" });
+      return res.status(409).json({ error: "Department already exists" });
     }
     if (headOfDepartment) {
       const hodExists = await Staff.findOne({
@@ -46,7 +46,7 @@ export const createDepartment = async (req, res) => {
       if (!hodExists) {
         return res
           .status(400)
-          .json({ message: "Invalid or inactive Head of Department" });
+          .json({ error: "Invalid or inactive Head of Department" });
       }
     }
 
@@ -57,7 +57,7 @@ export const createDepartment = async (req, res) => {
       });
       if (staffCount !== staffList.length) {
         return res.status(400).json({
-          message: "One or more staff members are invalid or inactive",
+          error: "One or more staff members are invalid or inactive",
         });
       }
     }
@@ -78,13 +78,13 @@ export const createDepartment = async (req, res) => {
       department,
     });
   } catch (error) {
-    console.error("createDepartment Error:", error.message);
+    console.error("createDepartment Error:", error);
 
     if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ error: error });
     }
 
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -135,8 +135,8 @@ export const getAllDepartments = async (req, res) => {
       departments: departmentsWithHod,
     });
   } catch (error) {
-    console.error("getAllDepartments Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("getAllDepartments Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -144,7 +144,7 @@ export const getDepartmentById = async (req, res) => {
   const { id } = req.params;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid department ID" });
+      return res.status(400).json({ error: "Invalid department ID" });
     }
 
     const department = await Department.findOne({ _id: id, isActive: true })
@@ -152,12 +152,12 @@ export const getDepartmentById = async (req, res) => {
       .populate("headOfDepartment", "name role");
 
     if (!department) {
-      return res.status(404).json({ message: "Department not found " });
+      return res.status(404).json({ error: "Department not found " });
     }
     return res.status(200).json({ message: "Department found", department });
   } catch (error) {
-    console.error("getDepartmentById Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("getDepartmentById Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -174,7 +174,7 @@ export const updateDepartment = async (req, res) => {
   const { id } = req.params;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid department ID" });
+      return res.status(400).json({ error: "Invalid department ID" });
     }
 
     if (name) {
@@ -185,7 +185,7 @@ export const updateDepartment = async (req, res) => {
       if (existingDept) {
         return res
           .status(409)
-          .json({ message: "Department name already in use" });
+          .json({ error: "Department name already in use" });
       }
     }
 
@@ -197,7 +197,7 @@ export const updateDepartment = async (req, res) => {
       if (!hodExists) {
         return res
           .status(400)
-          .json({ message: "Invalid or inactive Head of Department" });
+          .json({ error: "Invalid or inactive Head of Department" });
       }
     }
 
@@ -210,7 +210,7 @@ export const updateDepartment = async (req, res) => {
         return res
           .status(400)
           .json({
-            message: "One or more staff members are invalid or inactive",
+            error: "One or more staff members are invalid or inactive",
           });
       }
     }
@@ -236,7 +236,7 @@ export const updateDepartment = async (req, res) => {
     );
 
     if (!updatedDepartment) {
-      return res.status(404).json({ message: "Department not found" });
+      return res.status(404).json({ error: "Department not found" });
     }
 
     return res.status(200).json({
@@ -244,11 +244,11 @@ export const updateDepartment = async (req, res) => {
       department: updatedDepartment,
     });
   } catch (error) {
-    console.error("updateDepartment Error:", error.message);
+    console.error("updateDepartment Error:", error);
     if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ error: error });
     }
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -256,7 +256,7 @@ export const deleteDepartment = async (req, res) => {
   const { id } = req.params;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid department ID" });
+      return res.status(400).json({ error: "Invalid department ID" });
     }
     const department = await Department.findOneAndUpdate(
       { _id: id, isActive: true },
@@ -267,15 +267,15 @@ export const deleteDepartment = async (req, res) => {
     if (!department) {
       return res
         .status(404)
-        .json({ message: "Department not found or already deleted" });
+        .json({ error: "Department not found or already deleted" });
     }
 
     return res
       .status(200)
       .json({ message: "Department soft deleted successfully", id });
   } catch (error) {
-    console.error("deleteDepartment Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("deleteDepartment Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -284,7 +284,7 @@ export const activateDepartment = async (req, res) => {
 
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid department ID" });
+      return res.status(400).json({ error: "Invalid department ID" });
     }
 
     const department = await Department.findOneAndUpdate(
@@ -296,15 +296,15 @@ export const activateDepartment = async (req, res) => {
     if (!department) {
       return res
         .status(404)
-        .json({ message: "Department not found or already active" });
+        .json({ error: "Department not found or already active" });
     }
 
     res
       .status(200)
       .json({ message: "Department reactivated successfully", department });
   } catch (error) {
-    console.error("activateDepartment Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("activateDepartment Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -312,7 +312,7 @@ export const getDepartmentStaff = async (req, res) => {
   const { id } = req.params;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid department ID" });
+      return res.status(400).json({ error: "Invalid department ID" });
     }
 
     const staff = await Staff.find({ departmentId: id, isActive: true }).select(
@@ -329,8 +329,8 @@ export const getDepartmentStaff = async (req, res) => {
       staff,
     });
   } catch (error) {
-    console.error("getDepartmentStaff Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("getDepartmentStaff Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -339,12 +339,12 @@ export const getDepartmentsByHospital = async (req, res) => {
 
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid Hospital ID" });
+      return res.status(400).json({ error: "Invalid Hospital ID" });
     }
 
     const hospitalExists = await Hospital.exists({ _id: id });
     if (!hospitalExists) {
-      return res.status(404).json({ message: "Hospital not found" });
+      return res.status(404).json({ error: "Hospital not found" });
     }
 
     const departments = await Department.find({
@@ -357,7 +357,7 @@ export const getDepartmentsByHospital = async (req, res) => {
 
     if (departments.length === 0) {
       return res.status(200).json({
-        message: "No departments found for this hospital",
+        error: "No departments found for this hospital",
         departments: [],
       });
     }
@@ -368,8 +368,8 @@ export const getDepartmentsByHospital = async (req, res) => {
       departments,
     });
   } catch (error) {
-    console.error("getDepartmentsByHospital Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("getDepartmentsByHospital Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -378,10 +378,10 @@ export const assignHeadOfDepartment = async (req, res) => {
   const { staffId } = req.body;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid Department ID" });
+      return res.status(400).json({ error: "Invalid Department ID" });
     }
     if (!mongoose.Types.ObjectId.isValid(staffId)) {
-      return res.status(400).json({ message: "Invalid Staff ID" });
+      return res.status(400).json({ error: "Invalid Staff ID" });
     }
 
     const department = await Department.findOne({
@@ -391,11 +391,11 @@ export const assignHeadOfDepartment = async (req, res) => {
     if (!department) {
       return res
         .status(404)
-        .json({ message: "Department does not exist or is inactive" });
+        .json({ error: "Department does not exist or is inactive" });
     }
     if (department.headOfDepartment?.toString() === staffId) {
       return res.status(400).json({
-        message: "This staff member is already assigned as Head of Department",
+        error: "This staff member is already assigned as Head of Department",
       });
     }
 
@@ -406,16 +406,16 @@ export const assignHeadOfDepartment = async (req, res) => {
     if (!staff) {
       return res
         .status(404)
-        .json({ message: "Staff does not exist or is inactive" });
+        .json({ error: "Staff does not exist or is inactive" });
     }
     if (staff.role !== "doctor") {
       return res.status(400).json({
-        message: "Only doctors can be assigned as Head of Department",
+        error: "Only doctors can be assigned as Head of Department",
       });
     }
     if (staff.departmentId.name !== department.name) {
       return res.status(400).json({
-        message:
+        error:
           "Staff member must belong to the same department to be assigned as Head of Department",
       });
     }
@@ -429,7 +429,7 @@ export const assignHeadOfDepartment = async (req, res) => {
       .status(200)
       .json({ message: "HOD assigned successfully", department });
   } catch (error) {
-    console.error("assignHeadOfDepartment Error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("assignHeadOfDepartment Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

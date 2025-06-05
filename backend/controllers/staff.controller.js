@@ -25,12 +25,12 @@ export const createStaff = async (req, res) => {
   try {
     const existing = await Staff.findOne({ email });
     if (existing)
-      return res.status(409).json({ message: "Email already in use" });
+      return res.status(409).json({ error: "Email already in use" });
 
     if (!isValidObjectId(departmentId))
-      return res.status(400).json({ message: "Invalid Department ID" });
+      return res.status(400).json({ error: "Invalid Department ID" });
     if (!isValidObjectId(hospitalId))
-      return res.status(400).json({ message: "Invalid Hospital ID" });
+      return res.status(400).json({ error: "Invalid Hospital ID" });
 
     const [hospitalExists, department] = await Promise.all([
       Hospital.findById(hospitalId),
@@ -38,11 +38,11 @@ export const createStaff = async (req, res) => {
     ]);
 
     if (!hospitalExists)
-      return res.status(404).json({ message: "Hospital does not exist" });
+      return res.status(404).json({ error: "Hospital does not exist" });
     if (!department)
       return res
         .status(404)
-        .json({ message: "Department does not exist or is inactive" });
+        .json({ error: "Department does not exist or is inactive" });
 
     const staff = new Staff({
       name,
@@ -70,8 +70,8 @@ export const createStaff = async (req, res) => {
       .status(201)
       .json({ message: "Staff created successfully", staff });
   } catch (error) {
-    console.error("createStaff error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("createStaff error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -99,8 +99,8 @@ export const getAllStaff = async (req, res) => {
       staffs,
     });
   } catch (error) {
-    console.error("getAllStaff error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getAllStaff error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -108,7 +108,7 @@ export const getStaffById = async (req, res) => {
   const { id } = req.params;
   try {
     if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid staff ID" });
+      return res.status(400).json({ error: "Invalid staff ID" });
 
     const staff = await Staff.findOne({ _id: id, isActive: true })
       .populate({
@@ -125,14 +125,14 @@ export const getStaffById = async (req, res) => {
     if (!staff)
       return res
         .status(404)
-        .json({ message: "Staff does not exist or is inactive" });
+        .json({ error: "Staff does not exist or is inactive" });
 
     staff.departmentId.headOfDepartment ??= { name: "Not Assigned" };
 
     return res.status(200).json({ message: "Staff found", staff });
   } catch (error) {
-    console.error("getStaffById error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getStaffById error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -141,47 +141,58 @@ export const updateStaff = async (req, res) => {
   const {
     name,
     email,
-    phone = null,
-    address = null,
-    dateOfBirth = null,
+    phone,
+    address,
+    dateOfBirth,
     gender,
-    photo = null,
+    photo,
     role,
     departmentId,
     hospitalId,
-    salary = null,
+    salary,
     dateOfJoining,
     workingHours,
   } = req.body;
 
   try {
     if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid staff ID" });
+      return res.status(400).json({ error: "Invalid staff ID" });
 
     if (email) {
       const existing = await Staff.findOne({ email, _id: { $ne: id } });
       if (existing)
         return res
           .status(409)
-          .json({ message: "Email already in use by another staff member" });
+          .json({ error: "Email already in use by another staff member" });
+    }
+    if (phone) {
+      const existing = await Staff.findOne({ phone, _id: { $ne: id } });
+      if (existing)
+        return res
+          .status(409)
+          .json({ error: "Phone already in use by another staff member" });
     }
 
-    if (!isValidObjectId(departmentId))
-      return res.status(400).json({ message: "Invalid Department ID" });
-    if (!isValidObjectId(hospitalId))
-      return res.status(400).json({ message: "Invalid Hospital ID" });
+    if (departmentId && !isValidObjectId(departmentId))
+      return res.status(400).json({ error: "Invalid Department ID" });
+
+    if (hospitalId && !isValidObjectId(hospitalId))
+      return res.status(400).json({ error: "Invalid Hospital ID" });
 
     const [department, hospitalExists] = await Promise.all([
-      Department.findOne({ _id: departmentId, isActive: true }),
-      Hospital.findById(hospitalId),
+      departmentId
+        ? Department.findOne({ _id: departmentId, isActive: true })
+        : null,
+      hospitalId ? Hospital.findById(hospitalId) : null,
     ]);
 
-    if (!department)
+    if (departmentId && !department)
       return res
         .status(404)
-        .json({ message: "Department does not exist or is inactive" });
-    if (!hospitalExists)
-      return res.status(404).json({ message: "Hospital does not exist" });
+        .json({ error: "Department does not exist or is inactive" });
+
+    if (hospitalId && !hospitalExists)
+      return res.status(404).json({ error: "Hospital does not exist" });
 
     const staff = await Staff.findByIdAndUpdate(
       id,
@@ -203,14 +214,14 @@ export const updateStaff = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
+    if (!staff) return res.status(404).json({ error: "Staff not found" });
 
     return res
       .status(200)
       .json({ message: "Staff updated successfully", staff });
   } catch (error) {
-    console.error("updateStaff error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("updateStaff error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -218,12 +229,12 @@ export const deactivateStaff = async (req, res) => {
   const { id } = req.params;
   try {
     if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid staff ID" });
+      return res.status(400).json({ error: "Invalid staff ID" });
 
     const staff = await Staff.findById(id);
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
+    if (!staff) return res.status(404).json({ error: "Staff not found" });
     if (!staff.isActive)
-      return res.status(400).json({ message: "Staff is already inactive" });
+      return res.status(400).json({ error: "Staff is already inactive" });
 
     staff.isActive = false;
     await staff.save();
@@ -235,8 +246,8 @@ export const deactivateStaff = async (req, res) => {
       .status(200)
       .json({ message: "Staff Deactivated Successfully", id });
   } catch (error) {
-    console.error("deactivateStaff error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("deactivateStaff error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -244,12 +255,12 @@ export const activateStaff = async (req, res) => {
   const { id } = req.params;
   try {
     if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid staff ID" });
+      return res.status(400).json({ error: "Invalid staff ID" });
 
     const staff = await Staff.findById(id);
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
+    if (!staff) return res.status(404).json({ error: "Staff not found" });
     if (staff.isActive)
-      return res.status(400).json({ message: "Staff is already active" });
+      return res.status(400).json({ error: "Staff is already active" });
 
     staff.isActive = true;
     await staff.save();
@@ -261,8 +272,8 @@ export const activateStaff = async (req, res) => {
       .status(200)
       .json({ message: "Staff Activated Successfully", staff });
   } catch (error) {
-    console.error("activateStaff error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("activateStaff error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -272,16 +283,16 @@ export const updateDepartment = async (req, res) => {
 
   try {
     if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid staff ID" });
+      return res.status(400).json({ error: "Invalid staff ID" });
     if (!isValidObjectId(departmentId))
-      return res.status(400).json({ message: "Invalid Department ID" });
+      return res.status(400).json({ error: "Invalid Department ID" });
 
     const staff = await Staff.findOne({ _id: id, isActive: true }).populate(
       "departmentId",
       "name"
     );
     if (!staff)
-      return res.status(404).json({ message: "Staff not found or inactive" });
+      return res.status(404).json({ error: "Staff not found or inactive" });
 
     const newDepartment = await Department.findOne({
       _id: departmentId,
@@ -290,12 +301,12 @@ export const updateDepartment = async (req, res) => {
     if (!newDepartment)
       return res
         .status(404)
-        .json({ message: "Department not found or inactive" });
+        .json({ error: "Department not found or inactive" });
 
     if (staff.departmentId._id.toString() === departmentId)
       return res
         .status(400)
-        .json({ message: "Staff is already in this department" });
+        .json({ error: "Staff is already in this department" });
 
     const oldDepartmentId = staff.departmentId._id;
 
@@ -315,7 +326,7 @@ export const updateDepartment = async (req, res) => {
       .status(200)
       .json({ message: "Updated Department Successfully", staff });
   } catch (error) {
-    console.error("updateDepartment error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("updateDepartment error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };

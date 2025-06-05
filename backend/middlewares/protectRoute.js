@@ -1,23 +1,101 @@
 import jwt from "jsonwebtoken";
 import Auth from "../models/auth.model.js";
+import Staff from "../models/staff.model.js";
+import Patient from "../models/patient.model.js";
 
 export const protectRoute = async (req, res, next) => {
-  const authHeaders = req.headers.authorization||"";
-  if (!authHeaders || !authHeaders.startsWith("Bearer")) {
-    return res.status(401).json({ message: "No token, authorization denied " });
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
-  const token = authHeaders.split(" ")[1]?.trim();
+
+  const token = authHeader.split(" ")[1];
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await Auth.findById(decoded.id);
+    const authUser = await Auth.findById(decoded.id).select("+password");
 
-    if (!user) {
+    if (!authUser) {
       return res.status(404).json({ message: "User not found" });
     }
-    req.user = user;
+
+    let profile = null;
+    if (authUser.role === "Staff") {
+      profile = await Staff.findById(authUser.linkedProfileId);
+    } else if (authUser.role === "Patient") {
+      profile = await Patient.findById(authUser.linkedProfileId);
+    }
+
+    if (!profile) {
+      return res.status(404).json({ message: "Linked profile not found" });
+    }
+
+    req.user = {
+      auth: authUser,
+      profile,
+    };
+
     next();
   } catch (error) {
     console.error("Auth Middleware Error:", error.message);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
+};
+
+export const adminRoute = (req, res, next) => {
+  const role = req.user?.profile?.role;
+  if (!role) {
+    return res.status(401).json({ message: "Unauthorized: Role missing" });
+  }
+  if (role.toLowerCase() === "admin") {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied: Unauthorized role" });
+};
+
+export const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || req.user.auth.role !== "Staff") {
+      return res.status(403).json({ message: "Access denied: Not a staff" });
+    }
+
+    const userRole = req.user.profile.role.toLowerCase();
+    const allowed = allowedRoles.map((r) => r.toLowerCase());
+    if (!allowed.includes(userRole)) {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Unauthorized role" });
+    }
+
+    next();
+  };
+};
+
+export const authorizePatientOrStaff = (req, res, next) => {
+  const user = req.user;
+  const requestedPatientId = req.params.id;
+
+  if (user.auth.role === "Staff") {
+    return next();
+  }
+  if (
+    user.auth.role === "Patient" &&
+    user.profile._id.toString() === requestedPatientId
+  ) {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied" });
+};
+
+export const authorizeUser = (req, res, next) => {
+  const userId = req.user?.auth?._id?.toString();
+  const requestedAuthId = req.params.id?.toString();
+  if (!requestedAuthId) {
+    return res.status(400).json({ message: "Missing user ID parameter" });
+  }
+  if (userId === requestedAuthId) {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied" });
 };

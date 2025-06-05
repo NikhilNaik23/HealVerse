@@ -17,27 +17,27 @@ export const createDoctor = async (req, res) => {
   try {
     const staff = await Staff.findById(staffId);
     if (!staff || !staff.isActive) {
-      return res.status(400).json({ message: "Invalid or inactive Staff Id" });
+      return res.status(400).json({ error: "Invalid or inactive Staff Id" });
     }
 
     const existingDoctor = await Doctor.findOne({ staffId });
     if (existingDoctor) {
       return res
         .status(400)
-        .json({ message: "Doctor already exists for this staff" });
+        .json({ error: "Doctor already exists for this staff" });
     }
 
     if (staff.role !== "doctor") {
       return res
         .status(400)
-        .json({ message: "Staff is not assigned as a doctor" });
+        .json({ error: "Staff is not assigned as a doctor" });
     }
 
     const department = await Department.findById(staff.departmentId);
     if (!department) {
       return res
         .status(400)
-        .json({ message: "Department not found for this staff." });
+        .json({ error: "Department not found for this staff." });
     }
 
     const allSpecsValid = specialization.every((spec) =>
@@ -45,7 +45,7 @@ export const createDoctor = async (req, res) => {
     );
     if (!allSpecsValid) {
       return res.status(400).json({
-        message:
+        error:
           "Doctor specialization(s) do not match department specializations.",
       });
     }
@@ -61,8 +61,8 @@ export const createDoctor = async (req, res) => {
       .status(201)
       .json({ message: "Doctor Created Successfully", doctor });
   } catch (error) {
-    console.error("createDoctor Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("createDoctor Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -91,8 +91,8 @@ export const getAllDoctors = async (req, res) => {
       .status(200)
       .json({ message, doctorCount: doctors.length, doctors });
   } catch (error) {
-    console.error("getAllDoctors Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getAllDoctors Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -108,7 +108,7 @@ export const getDoctorById = async (req, res) => {
     if (!doctor || !doctor.staffId?.isActive) {
       return res
         .status(400)
-        .json({ message: "Doctor does not exist or is inactive" });
+        .json({ error: "Doctor does not exist or is inactive" });
     }
 
     const requestedDateTime = moment();
@@ -120,8 +120,8 @@ export const getDoctorById = async (req, res) => {
       .status(200)
       .json({ message: "Doctor fetched successfully", doctor, isAvailable });
   } catch (error) {
-    console.error("getDoctorById Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getDoctorById Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -140,7 +140,7 @@ export const updateDoctor = async (req, res) => {
     if (!doctor || !doctor.staffId?.isActive) {
       return res
         .status(400)
-        .json({ message: "Associated staff is inactive or does not exist" });
+        .json({ error: "Associated staff is inactive or does not exist" });
     }
 
     if (specialization !== undefined) {
@@ -148,14 +148,14 @@ export const updateDoctor = async (req, res) => {
       if (!department) {
         return res
           .status(400)
-          .json({ message: "Department not found for this staff." });
+          .json({ error: "Department not found for this staff." });
       }
       const allSpecsValid = specialization.every((spec) =>
         department.specializations.includes(spec)
       );
       if (!allSpecsValid) {
         return res.status(400).json({
-          message:
+          error:
             "Updated specialization(s) do not match department specializations.",
         });
       }
@@ -173,8 +173,8 @@ export const updateDoctor = async (req, res) => {
       .status(200)
       .json({ message: "Doctor updated successfully", doctor });
   } catch (error) {
-    console.error("updateDoctor Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("updateDoctor Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -196,7 +196,7 @@ export const getAvailableDoctors = async (req, res) => {
       );
     });
 
-    const message = availableDoctors.length
+    const error = availableDoctors.length
       ? "Available doctors fetched successfully"
       : "No doctors currently available";
     return res.status(200).json({
@@ -205,8 +205,8 @@ export const getAvailableDoctors = async (req, res) => {
       doctors: availableDoctors,
     });
   } catch (error) {
-    console.error("getAvailableDoctors Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getAvailableDoctors Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -214,13 +214,13 @@ export const assignPatients = async (req, res) => {
   const { doctorId, patientId } = req.params;
   try {
     if (!doctorId || !patientId) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ error: "All fields are required" });
     }
     if (
       !mongoose.Types.ObjectId.isValid(doctorId) ||
       !mongoose.Types.ObjectId.isValid(patientId)
     ) {
-      return res.status(400).json({ message: "Invalid IDs provided" });
+      return res.status(400).json({ error: "Invalid IDs provided" });
     }
 
     const doctor = await Doctor.findById(doctorId).populate({
@@ -230,12 +230,12 @@ export const assignPatients = async (req, res) => {
     if (!doctor || !doctor.staffId?.isActive) {
       return res
         .status(404)
-        .json({ message: "Doctor does not exist or is inactive" });
+        .json({ error: "Doctor does not exist or is inactive" });
     }
 
     const patient = await Patient.findById(patientId);
     if (!patient)
-      return res.status(404).json({ message: "Invalid Patient Id" });
+      return res.status(404).json({ error: "Invalid Patient Id" });
 
     let patientUpdated = false;
     let doctorUpdated = false;
@@ -270,8 +270,8 @@ export const assignPatients = async (req, res) => {
       patient,
     });
   } catch (error) {
-    console.error("assignPatients Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("assignPatients Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 export const getDoctorByStaffId = async (req, res) => {
@@ -281,7 +281,7 @@ export const getDoctorByStaffId = async (req, res) => {
     if (!staff) {
       return res
         .status(404)
-        .json({ message: "Staff does not exist or is inactive" });
+        .json({ error: "Staff does not exist or is inactive" });
     }
 
     const doctor = await Doctor.findOne({ staffId: staff._id }).populate({
@@ -293,14 +293,14 @@ export const getDoctorByStaffId = async (req, res) => {
     if (!doctor) {
       return res
         .status(400)
-        .json({ message: "Staff is not assigned as a doctor" });
+        .json({ error: "Staff is not assigned as a doctor" });
     }
 
     return res
       .status(200)
       .json({ message: "Doctor details fetched successfully", doctor });
   } catch (error) {
-    console.error("getDoctorByStaffId Error:", error.message);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("getDoctorByStaffId Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };

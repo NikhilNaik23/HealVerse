@@ -16,8 +16,11 @@ const contactDetailsSchema = new mongoose.Schema(
       type: String,
       trim: true,
       unique: true,
-      lowercase:true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please enter a valid email address"],
+      lowercase: true,
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        "Please enter a valid email address",
+      ],
       required: true,
     },
   },
@@ -45,8 +48,7 @@ const hospitalSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-hospitalSchema.index({ name: 1 });
-hospitalSchema.index({ location: 1 });
+hospitalSchema.index({ name: 1, location: 1 }, { unique: true });
 hospitalSchema.index({ directorId: 1 });
 const Hospital = mongoose.model("Hospital", hospitalSchema);
 export default Hospital;

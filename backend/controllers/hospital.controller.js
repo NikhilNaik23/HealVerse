@@ -6,12 +6,12 @@ export const createHospital = async (req, res) => {
 
   try {
     if (directorId && !mongoose.Types.ObjectId.isValid(directorId)) {
-      return res.status(400).json({ message: "Invalid director ID" });
+      return res.status(400).json({ error: "Invalid director ID" });
     }
 
-    const existingHospital = await Hospital.findOne({ name, location,contactDetails });
+    const existingHospital = await Hospital.findOne({ name, location });
     if (existingHospital) {
-      return res.status(409).json({ message: "Hospital already exists" });
+      return res.status(409).json({ error: "Hospital already exists" });
     }
 
     const hospital = await Hospital.create({
@@ -27,14 +27,14 @@ export const createHospital = async (req, res) => {
       hospital,
     });
   } catch (error) {
-    console.error("createHospital Error:", error.message);
+    console.error("createHospital Error:", error);
 
     if (error.code === 11000) {
       const duplicateKey = Object.keys(error.keyValue)[0];
-      return res.status(409).json({ message: `${duplicateKey} already exists.` });
+      return res.status(409).json({ error: `${duplicateKey} already exists.` });
     }
 
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -47,7 +47,7 @@ export const getHospitals = async (req, res) => {
     return res.status(200).json({ message: "Hospitals fetched successfully",hospitalCount:hospitals.length, hospitals });
   } catch (error) {
     console.error("getHospitals Error:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -55,18 +55,18 @@ export const getHospitalById = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid hospital ID" });
+      return res.status(400).json({ error: "Invalid hospital ID" });
     }
 
     const hospital = await Hospital.findById(id).lean();
     if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found" });
+      return res.status(404).json({ error: "Hospital not found" });
     }
 
     return res.status(200).json({ message: "Hospital fetched successfully", hospital });
   } catch (error) {
     console.error("getHospitalById Error:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -76,16 +76,16 @@ export const updateHospital = async (req, res) => {
 
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid hospital ID" });
+      return res.status(400).json({ error: "Invalid hospital ID" });
     }
 
     if (directorId && !mongoose.Types.ObjectId.isValid(directorId)) {
-      return res.status(400).json({ message: "Invalid director ID" });
+      return res.status(400).json({ error: "Invalid director ID" });
     }
 
     const hospital = await Hospital.findById(id);
     if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found" });
+      return res.status(404).json({ error: "Hospital not found" });
     }
 
     const updatedHospital = await Hospital.findByIdAndUpdate(
@@ -100,7 +100,7 @@ export const updateHospital = async (req, res) => {
     });
   } catch (error) {
     console.error("updateHospital Error:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -108,17 +108,17 @@ export const deleteHospital = async (req, res) => {
   const { id } = req.params;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid hospital ID" });
+      return res.status(400).json({ error: "Invalid hospital ID" });
     }
 
     const hospital = await Hospital.findByIdAndDelete(id);
     if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found" });
+      return res.status(404).json({ error: "Hospital not found" });
     }
 
     res.status(200).json({ message: "Hospital deleted successfully", id });
   } catch (error) {
     console.error("deleteHospital Error:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
