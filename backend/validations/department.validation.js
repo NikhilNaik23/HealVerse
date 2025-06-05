@@ -49,6 +49,9 @@ const validSpecializations = [
   "sleep_medicine",
   "clinical_geneticist",
   "occupational_medicine",
+  "hr_manager",
+  "recruiter",
+  "payroll_officer",
 ];
 
 export const departmentValidationSchema = Joi.object({
@@ -88,13 +91,12 @@ export const departmentValidationSchema = Joi.object({
     "any.invalid": "Staff list contains an invalid ObjectId",
   }),
   specializations: Joi.array()
-  .items(Joi.string().valid(...validSpecializations))
-  .min(1)
-  .required()
-  .messages({
-    "any.only": "One or more specializations are invalid",
-    "array.min": "At least one specialization must be selected",
-    "any.required": "Specializations field is required",
-  }),
-
+    .items(Joi.string().valid(...validSpecializations))
+    .min(1)
+    .required()
+    .messages({
+      "any.only": "One or more specializations are invalid",
+      "array.min": "At least one specialization must be selected",
+      "any.required": "Specializations field is required",
+    }),
 });
