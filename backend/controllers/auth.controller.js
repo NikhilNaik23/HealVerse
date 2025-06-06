@@ -123,6 +123,15 @@ export const registerStaff = async (req, res) => {
   const { email, linkedProfileId } = req.body;
   try {
     const existingAuth = await Auth.findOne({ email });
+    const validStaff = await Staff.findById(linkedProfileId);
+    if (!validStaff) {
+      return res.status(404).json({ error: "Staff not found" });
+    }
+    if (email !== validStaff.email) {
+      return res
+        .status(400)
+        .json({ error: "Email does not match with staff's mail" });
+    }
     if (existingAuth && !existingAuth.isPasswordSet) {
       const token = generateTokenForSetPassword(
         existingAuth._id,
@@ -308,13 +317,16 @@ export const changePassword = async (req, res) => {
   if (!validatePassword(newPassword)) {
     return res.status(400).json({ error: "invalid new password" });
   }
+  if(currentPassword === newPassword){
+    return res.status(400).json({error:"New password should not be same as current password"})
+  }
   if (newPassword !== confirmNewPassword) {
     return res
       .status(400)
       .json({ error: "new password and confirm password are not same" });
   }
   try {
-    const user = await Auth.findById(req.user._id).select("+password");
+    const user = await Auth.findById(req.user.auth._id).select("+password");
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(400).json({ error: "Incorrect current password" });

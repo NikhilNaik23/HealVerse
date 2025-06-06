@@ -6,15 +6,15 @@ import Patient from "../models/patient.model.js";
 export const protectRoute = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
 
-  if (!authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token, authorization denied" });
-  }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  return res.status(401).json({ message: "No token provided" });
+}
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const authUser = await Auth.findById(decoded.id).select("+password");
+    const authUser = await Auth.findById(decoded.id);
 
     if (!authUser) {
       return res.status(404).json({ message: "User not found" });
@@ -59,6 +59,9 @@ export const authorizeRoles = (...allowedRoles) => {
     if (!req.user || req.user.auth.role !== "Staff") {
       return res.status(403).json({ message: "Access denied: Not a staff" });
     }
+    if (!req.user?.profile?.role) {
+      return res.status(403).json({ message: "Access denied: Role missing" });
+    }
 
     const userRole = req.user.profile.role.toLowerCase();
     const allowed = allowedRoles.map((r) => r.toLowerCase());
@@ -90,7 +93,7 @@ export const authorizePatientOrStaff = (req, res, next) => {
 
 export const authorizeUser = (req, res, next) => {
   const userId = req.user?.auth?._id?.toString();
-  const requestedAuthId = req.params.id?.toString();
+  const requestedAuthId = req.query.id || req.params.id;
   if (!requestedAuthId) {
     return res.status(400).json({ message: "Missing user ID parameter" });
   }

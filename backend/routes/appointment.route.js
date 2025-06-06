@@ -82,23 +82,15 @@ router.delete(
 // @route GET /api/appointment/user/:id/upcoming
 // @desc get upcoming appointments of a specific user through authId (patient/doctor)
 // @access USERS/Private
-router.get(
-  "/user/:id/upcoming",
-  protectRoute,
-  authorizeUser,
-  validateObjectId,
-  getUserAppointments
-);
+router.get("/my/upcoming", protectRoute, getUserAppointments);
 
 // @route GET /api/appointment/doctor/:id/daily-summary
-// @desc get upcoming appointments of a specific doctor through authId (patient/doctor)
+// @desc get today's appointments for the logged-in doctor
 // @access Admin/Doctor/Private
 router.get(
-  "/doctor/:id/daily-summary",
+  "/doctor/daily-summary",
   protectRoute,
-  authorizePatientOrStaff,
-  authorizeUser,
-  validateObjectId,
+  authorizeRoles("doctor"),
   getTodayAppointmentsForDoctor
 );
 

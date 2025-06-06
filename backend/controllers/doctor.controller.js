@@ -196,7 +196,7 @@ export const getAvailableDoctors = async (req, res) => {
       );
     });
 
-    const error = availableDoctors.length
+    const message = availableDoctors.length
       ? "Available doctors fetched successfully"
       : "No doctors currently available";
     return res.status(200).json({

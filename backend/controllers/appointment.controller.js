@@ -456,8 +456,8 @@ export const getUpcomingAppointments = async (req, res) => {
 };
 
 export const getUserAppointments = async (req, res) => {
-  const { id } = req.params;
   try {
+    const id = req.user.auth?._id;
     const user = await Auth.findById(id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -522,7 +522,7 @@ export const getUserAppointments = async (req, res) => {
 };
 
 export const getTodayAppointmentsForDoctor = async (req, res) => {
-  const { id } = req.params;
+  const id = req.user.auth?._id;
   const today = moment().format("YYYY-MM-DD");
   try {
     const auth = await Auth.findById(id);
