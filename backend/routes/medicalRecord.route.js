@@ -8,6 +8,7 @@ import {
   getMedicalRecordById,
   getMedicalRecordsByPatient,
   updateMedicalRecord,
+  uploadReports,
 } from "../controllers/medicalRecord.controller.js";
 import {
   authorizePatientOrStaff,
@@ -60,5 +61,14 @@ router.put(
   validateMedicalRecord,
   updateMedicalRecord
 );
+
+router.put(
+  "/:id/attachments",
+  protectRoute,
+  authorizeRoles("doctor", "admin", "nurse"),
+  validateObjectId,
+  uploadReports
+);
+
 
 export default router;

@@ -3,6 +3,7 @@ import Doctor from "../models/doctor.model.js";
 import Department from "../models/department.model.js";
 import MedicalRecord from "../models/medicalRecord.model.js";
 import { isDoctorAvailable } from "../lib/utils/checkDoctorAvailability.js";
+import mongoose from "mongoose";
 
 export const createMedicalRecord = async (req, res) => {
   const {
@@ -103,9 +104,7 @@ export const getMedicalRecordById = async (req, res) => {
       })
       .populate("createdBy", "name role departmentId")
       .populate("departmentId", "name")
-      .populate("attachments")
-      .populate("prescriptions")
-      .populate("billingId");
+      .populate("attachments");
 
     if (!record) {
       return res.status(404).json({ error: "Medical record not found" });
@@ -215,5 +214,45 @@ export const deleteMedicalRecord = async (req, res) => {
   } catch (error) {
     console.error("deleteMedicalRecord Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const uploadReports = async (req, res) => {
+  const { id } = req.params;
+  const { attachments } = req.body;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid medical record ID" });
+    }
+
+    if (
+      !attachments ||
+      !Array.isArray(attachments) ||
+      attachments.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Attachments array is required and cannot be empty" });
+    }
+
+    const updatedRecord = await MedicalRecord.findByIdAndUpdate(
+      id,
+      { $push: { attachments: { $each: attachments } } },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({ error: "Medical record not found" });
+    }
+
+    return res.status(200).json({
+      message: "Attachments uploaded successfully",
+      medicalRecord: updatedRecord,
+    });
+  } catch (error) {
+    console.error("Error uploading attachments:", error);
+    return res
+      .status(500)
+      .json({ error: "Server error while uploading attachments" });
   }
 };
