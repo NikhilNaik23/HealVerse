@@ -73,6 +73,7 @@ export const createMedicalRecord = async (req, res) => {
       status: status || "open",
       prescriptions,
       billingId,
+      createdBy: req.user.profile?._id,
     });
 
     await newRecord.save();
@@ -90,7 +91,7 @@ export const getMedicalRecordById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const record = await MedicalRecord.findById(id)
+    const record = await MedicalRecord.findOne({ _id: id, isDeleted: false })
       .populate("patientId", "name email")
       .populate({
         path: "doctorId",
@@ -100,6 +101,7 @@ export const getMedicalRecordById = async (req, res) => {
           select: "name role departmentId",
         },
       })
+      .populate("createdBy", "name role departmentId")
       .populate("departmentId", "name")
       .populate("attachments")
       .populate("prescriptions")
@@ -198,5 +200,20 @@ export const updateMedicalRecord = async (req, res) => {
   } catch (error) {
     console.error("updateMedicalRecord Error: ", error);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+export const deleteMedicalRecord = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const record = await MedicalRecord.findById(id);
+    if (!record || record.isDeleted) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+    record.isDeleted = true;
+    await record.save();
+    res.status(200).json({ message: "Medical record soft-deleted" });
+  } catch (error) {
+    console.error("deleteMedicalRecord Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

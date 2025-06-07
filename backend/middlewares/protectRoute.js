@@ -7,8 +7,8 @@ export const protectRoute = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-  return res.status(401).json({ message: "No token provided" });
-}
+    return res.status(401).json({ message: "No token provided" });
+  }
 
   const token = authHeader.split(" ")[1];
 
@@ -63,12 +63,13 @@ export const authorizeRoles = (...allowedRoles) => {
       return res.status(403).json({ message: "Access denied: Role missing" });
     }
 
-    const userRole = req.user.profile.role.toLowerCase();
     const allowed = allowedRoles.map((r) => r.toLowerCase());
+    const userRole = req.user.profile.role?.toLowerCase();
+
     if (!allowed.includes(userRole)) {
       return res
         .status(403)
-        .json({ message: "Access denied: Unauthorized role" });
+        .json({ message: `Access denied for role: ${req.user.profile.role}` });
     }
 
     next();

@@ -263,6 +263,11 @@ export const updateAppointmentStatus = async (req, res) => {
         .status(409)
         .json({ error: `Status already is set to ${status}` });
     }
+    if (appointment.status === "cancelled" && status === "completed") {
+      return res
+        .status(400)
+        .json({ error: "Cannot mark a cancelled appointment as completed" });
+    }
     appointment.status = status;
     await appointment.save();
     return res
@@ -316,7 +321,10 @@ export const rescheduleAppointment = async (req, res) => {
         .json({ error: "Cannot reschedule a cancelled appointment." });
     }
 
-    if (appointment.date === date && appointment.time === time) {
+    const isSameDate = moment(appointment.date).isSame(date, "day");
+    const isSameTime = appointment.time === time;
+
+    if (isSameDate && isSameTime) {
       return res
         .status(409)
         .json({ error: "Appointment is already scheduled for this time." });

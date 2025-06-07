@@ -76,8 +76,21 @@ const medicalRecordSchema = new mongoose.Schema(
       ref: "Billing",
       default: null,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+      required: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
+medicalRecordSchema.index({ patientId: 1, isDeleted: 1 });
+medicalRecordSchema.index({ doctorId: 1, isDeleted: 1 });
+medicalRecordSchema.index({ departmentId: 1, isDeleted: 1 });
+
 const MedicalRecord = mongoose.model("MedicalRecord", medicalRecordSchema);
 export default MedicalRecord;

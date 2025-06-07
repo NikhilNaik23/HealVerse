@@ -47,13 +47,24 @@ const reportSchema = new mongoose.Schema(
     reportDate: {
       type: Date,
       required: true,
+      default: Date.now,
     },
-    fileURL: {
-      type: String,
+    fileURLs: {
+      type: [String],
       required: true,
+      validate: {
+        validator: (urls) =>
+          urls.every((url) => /^https:\/\/res\.cloudinary\.com\/.+/.test(url)),
+        message: "One or more file URLs are invalid Cloudinary URLs",
+      },
     },
     notes: {
       type: String,
+    },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+      required: true,
     },
   },
   { timestamps: true }

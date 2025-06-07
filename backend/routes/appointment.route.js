@@ -19,8 +19,6 @@ import {
 import {
   protectRoute,
   authorizeRoles,
-  authorizeUser,
-  authorizePatientOrStaff,
   adminRoute,
 } from "../middlewares/protectRoute.js";
 
