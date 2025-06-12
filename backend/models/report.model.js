@@ -69,5 +69,16 @@ const reportSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+reportSchema.pre("save", async function (next) {
+  const Report = mongoose.model("Report");
+  for (const url of this.fileURLs) {
+    const exists = await Report.findOne({ fileURLs: url });
+    if (exists) {
+      const error = new Error(`Duplicate file URL: ${url}`);
+      return next(error);
+    }
+  }
+  next();
+});
 const Report = mongoose.model("Report", reportSchema);
 export default Report;

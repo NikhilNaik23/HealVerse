@@ -39,6 +39,12 @@ export const createPatient = async (req, res) => {
   } = req.body;
 
   try {
+    const existingAuth = await Auth.findOne({ email });
+    if (existingAuth) {
+      return res
+        .status(409)
+        .json({ error: "An account already exists with this email" });
+    }
     const existingPatient = await Patient.findOne({
       $or: [{ phone }, { email }],
     });

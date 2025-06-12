@@ -119,13 +119,15 @@ export const getMedicalRecordById = async (req, res) => {
   }
 };
 
-export const getMedicalRecordsByPatient = async (req, res) => {
-  const { id } = req.params;
+export const getMedicalRecordsForLoggedInPatient = async (req, res) => {
+  const id = req.user?.profile?._id;
+
   try {
     const patient = await Patient.findById(id);
     if (!patient) {
       return res.status(400).json({ error: "Patient not found" });
     }
+
     const records = await MedicalRecord.find({ patientId: id })
       .populate("patientId", "name email")
       .populate({
@@ -140,17 +142,20 @@ export const getMedicalRecordsByPatient = async (req, res) => {
       .populate("attachments")
       .populate("prescriptions")
       .populate("billingId");
-    if (records.length === 0) {
+
+    if (!records.length) {
       return res
         .status(404)
         .json({ error: "No medical records found for this patient" });
     }
-    res
-      .status(200)
-      .json({ message: "Medical record fetched successfully", records });
+
+    res.status(200).json({
+      message: "Medical records fetched successfully",
+      records,
+    });
   } catch (error) {
-    console.error("getMedicalRecordsByPatient Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("getMedicalRecordsForLoggedInPatient Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -201,6 +206,7 @@ export const updateMedicalRecord = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 export const deleteMedicalRecord = async (req, res) => {
   const { id } = req.params;
   try {
@@ -235,15 +241,26 @@ export const uploadReports = async (req, res) => {
         .json({ error: "Attachments array is required and cannot be empty" });
     }
 
-    const updatedRecord = await MedicalRecord.findByIdAndUpdate(
-      id,
-      { $push: { attachments: { $each: attachments } } },
-      { new: true }
-    );
-
-    if (!updatedRecord) {
+    const record = await MedicalRecord.findById(id);
+    if (!record) {
       return res.status(404).json({ error: "Medical record not found" });
     }
+
+    const existingAttachments = record.attachments || [];
+
+    const uniqueAttachments = attachments.filter(
+      (att) => !existingAttachments.includes(att)
+    );
+    
+
+    if (uniqueAttachments.length === 0) {
+      return res.status(400).json({
+        error: "All provided attachments already exist in this medical record",
+      });
+    }
+
+    record.attachments.push(...uniqueAttachments);
+    await record.save();
 
     return res.status(200).json({
       message: "Attachments uploaded successfully",
@@ -251,6 +268,54 @@ export const uploadReports = async (req, res) => {
     });
   } catch (error) {
     console.error("Error uploading attachments:", error);
+    return res
+      .status(500)
+      .json({ error: "Server error while uploading attachments" });
+  }
+};
+
+export const getAllRecords = async (req, res) => {
+  try {
+    const { doctorId, departmentId, visitDate, visitType, status, createdBy } =
+      req.query;
+    const filters = {};
+    if (doctorId) {
+      filters.doctorId = doctorId;
+    }
+    if (departmentId) {
+      filters.departmentId = departmentId;
+    }
+    if (visitDate) {
+      filters.visitDate = visitDate;
+    }
+    if (visitType) {
+      filters.visitType = visitType;
+    }
+    if (status) {
+      filters.status = status;
+    }
+    if (createdBy) {
+      filters.createdBy = createdBy;
+    }
+    const records = await MedicalRecord.find(filters)
+      .populate("patientId", "name email")
+      .populate({
+        path: "doctorId",
+        select: "staffId",
+        populate: {
+          path: "staffId",
+          select: "name email ",
+        },
+      })
+      .populate("departmentId", "name");
+    if (records.length === 0) {
+      return res.status(200).json({ message: "No records found", records: [] });
+    }
+    return res
+      .status(200)
+      .json({ message: "Records fetched successfully", records });
+  } catch (error) {
+    console.error("getAllRecords Error:", error);
     return res
       .status(500)
       .json({ error: "Server error while uploading attachments" });
