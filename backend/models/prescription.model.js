@@ -19,8 +19,10 @@ const prescriptionSchema = new mongoose.Schema(
     diagnosis: {
       type: String,
       trim: true,
-      required: true,
+      required: [true, "Diagnosis is required"],
+      maxlength: 1000,
     },
+
     medicines: {
       type: [
         {
@@ -46,9 +48,24 @@ const prescriptionSchema = new mongoose.Schema(
     },
     advice: {
       type: String,
-      required: true,
       trim: true,
+      required: [true, "Advice is required"],
+      maxlength: 1000,
     },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+      required: true,
+    },
+    issuedDate: {
+      type: Date,
+      default: Date.now,
+    },
+    isDeleted:{
+      type:Boolean,
+      default:false,
+      select:false,
+    }
   },
   { timestamps: true }
 );

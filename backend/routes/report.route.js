@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createReport,
+  // downloadReportFile,
   getAllReports,
   getReportsByPatientId,
   getReportsOfLoggedInDoctors,
@@ -56,5 +57,14 @@ router.get(
   validateObjectId,
   getReportsByPatientId
 );
+
+// @route GET /api/reports/:reportId/download/:fileIndex
+// @desc Download a report file (secured)
+// @access Authorized roles only
+/* router.get(
+  "/:reportId/download/:fileIndex",
+  protectRoute,
+  downloadReportFile
+); */
 
 export default router;

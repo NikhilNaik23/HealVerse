@@ -12,6 +12,7 @@ import patientRoute from "./routes/patient.route.js";
 import appointmentRoute from "./routes/appointment.route.js";
 import medicalRecordRoute from "./routes/medicalRecord.route.js";
 import reportRoute from "./routes/report.route.js";
+import prescriptionRoute from "./routes/prescription.route.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/patient/", patientRoute);
 app.use("/api/appointment/", appointmentRoute);
 app.use("/api/medical-records/", medicalRecordRoute);
 app.use("/api/reports/", reportRoute);
+app.use("/api/prescriptions/", prescriptionRoute);
 
 app.listen(PORT, () => {
   console.log(`The app is running at http://localhost:${PORT}`);
