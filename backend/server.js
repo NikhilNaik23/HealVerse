@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-import './scheduler/appointmentReminder.js';
+import "./scheduler/appointmentReminder.js";
 
 import authRoute from "./routes/auth.route.js";
 import hospitalRoute from "./routes/hospital.route.js";
@@ -13,6 +13,7 @@ import appointmentRoute from "./routes/appointment.route.js";
 import medicalRecordRoute from "./routes/medicalRecord.route.js";
 import reportRoute from "./routes/report.route.js";
 import prescriptionRoute from "./routes/prescription.route.js";
+import emergencyPatientRoute from "./routes/emergencyPatient.route.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use("/api/appointment/", appointmentRoute);
 app.use("/api/medical-records/", medicalRecordRoute);
 app.use("/api/reports/", reportRoute);
 app.use("/api/prescriptions/", prescriptionRoute);
+app.use("/api/emergency-patients/", emergencyPatientRoute);
 
 app.listen(PORT, () => {
   console.log(`The app is running at http://localhost:${PORT}`);
