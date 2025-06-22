@@ -61,6 +61,16 @@ const emergencyPatientSchema = new mongoose.Schema(
       ref: "Staff",
       required: true,
     },
+    isEscalated: {
+      type: Boolean,
+      default: false,
+    },
+    linkedPatientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      required: false,
+      default: null,
+    },
   },
   { timestamps: true }
 );
