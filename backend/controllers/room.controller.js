@@ -131,7 +131,7 @@ export const assignInchargeStaff = async (req, res) => {
   try {
     const room = await Room.findById(id);
     if (!room) {
-      return res.status(400).json({ error: "Room not found" });
+      return res.status(400).json({ error: "Room not found or is deleted" });
     }
     if (room.inChargeStaffId) {
       return res
@@ -170,7 +170,7 @@ export const assignInchargeStaff = async (req, res) => {
 export const getAllRooms = async (req, res) => {
   try {
     const { type, floor, isOccupied, departmentId } = req.query;
-    const filter = {};
+    const filter = { isDeleted: false };
     if (type) filter.type = type;
     if (floor !== undefined) filter.floor = Number(floor);
     if (departmentId) filter.departmentId = departmentId;
@@ -305,6 +305,77 @@ export const manageRoomType = async (req, res) => {
     });
   } catch (error) {
     console.error("manageRoomType Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getAllBedsWithStatus = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const room = await Room.findById(id).populate(
+      "bedList",
+      "bedNumber isOccupied"
+    );
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+    const bedsWithStatus = room.bedList.map((bed) => ({
+      id: bed._id,
+      bedNumber: bed.bedNumber,
+      status: bed.isOccupied ? "unavailable" : "available",
+    }));
+    return res.status(200).json({
+      message: "All beds with status fetched successfully",
+      total: bedsWithStatus.length,
+      beds: bedsWithStatus,
+    });
+  } catch (error) {
+    console.error("getAllBedsOfARoom Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const softDeletion = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+    if (room.isDeleted) {
+      return res.status(400).json({ error: "Room is already deleted" });
+    }
+    await room.populate("bedList", "isOccupied");
+    const hasOccupiedBeds = room.bedList.some((bed) => bed.isOccupied);
+    if (hasOccupiedBeds) {
+      return res
+        .status(400)
+        .json({ error: "Cannot delete room with occupied beds" });
+    }
+    room.isDeleted = true;
+    await room.save();
+    res.status(200).json({ message: "Room is deleted successfully" });
+  } catch (error) {
+    console.error("softDeletion Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const activateRoom = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+    if (!room.isDeleted) {
+      return res.status(400).json({ error: "Room is already active" });
+    }
+    room.isDeleted = false;
+    await room.save();
+    res.status(200).json({ message: "Room has activated", room });
+  } catch (error) {
+    console.error("softDeletion Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

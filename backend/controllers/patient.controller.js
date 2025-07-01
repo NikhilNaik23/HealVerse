@@ -8,6 +8,7 @@ import Auth from "../models/auth.model.js";
 import { sendEmail } from "../lib/utils/sendMail.js";
 
 import crypto from "crypto";
+import Bed from "../models/bed.model.js";
 
 function generateRandomPassword(length = 12) {
   return crypto
@@ -385,6 +386,13 @@ export const updateDischargeDate = async (req, res) => {
 
     patient.dischargeDate = discharge;
     patient.currentStatus = "discharged";
+    const bed = await Bed.findOne({ patientId: patient._id });
+    if (bed) {
+      bed.isOccupied = false;
+      bed.patientId = null;
+      await bed.save();
+      console.log(`Bed ${bed.bedNumber} freed from patient ${patient.name}`);
+    }
     await patient.save();
 
     return res.status(200).json({

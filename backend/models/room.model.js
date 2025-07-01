@@ -34,7 +34,7 @@ const roomSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    isOccupied: {
+    isDeleted: {
       type: Boolean,
       default: false,
     },
@@ -78,14 +78,15 @@ roomSchema.index({ roomNumber: 1, floor: 1 }, { unique: true });
 
 roomSchema.virtual("isOccupied").get(function () {
   if (!this.bedList || this.bedList.length === 0) return false;
-  const isPopulated = typeof this.bedList[0] === "object" && this.bedList[0].isOccupied !== undefined;
-  if (!isPopulated) return null; 
-  return this.bedList.every(bed => bed.isOccupied === true);
+  const isPopulated =
+    typeof this.bedList[0] === "object" &&
+    this.bedList[0].isOccupied !== undefined;
+  if (!isPopulated) return null;
+  return this.bedList.every((bed) => bed.isOccupied === true);
 });
 
 roomSchema.set("toJSON", { virtuals: true });
 roomSchema.set("toObject", { virtuals: true });
-
 
 const Room = mongoose.model("Room", roomSchema);
 export default Room;
