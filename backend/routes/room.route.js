@@ -34,15 +34,7 @@ router.get(
   getAllRooms
 );
 
-// @route   GET /api/rooms/occupancy-status
-// @desc    Get occupancy status of all rooms (for calendar views)
-// @access  Admin, Receptionist
-router.get(
-  "/occupancy-status",
-  protectRoute,
-  authorizeRoles("admin", "receptionist"),
-  getAllBedsWithStatus
-);
+
 
 // @route   GET /api/rooms/:id
 // @desc    Get room by ID
@@ -60,6 +52,16 @@ router.get(
 // @access  Admin
 router.delete("/:id", protectRoute, adminRoute, softDeletion);
 
+// @route   GET /api/rooms/occupancy-status
+// @desc    Get occupancy status of all beds for a room 
+// @access  Admin, Receptionist
+router.get(
+  "/:id/occupancy-status",
+  protectRoute,
+  authorizeRoles("admin", "receptionist"),
+  getAllBedsWithStatus
+);
+
 // @route   PATCH /api/rooms/:id/activate
 // @desc    Reactivate a soft-deleted room
 // @access  Admin
@@ -76,11 +78,11 @@ router.patch(
   assignInchargeStaff
 );
 
-// @route   PATCH /api/rooms/:id/assign-rooms
+// @route   PATCH /api/rooms/:id/assign-beds
 // @desc    Assign multiple beds to a room
 // @access  Admin
 router.patch(
-  "/:id/assign-rooms",
+  "/:id/assign-beds",
   protectRoute,
   adminRoute,
   validateObjectId,

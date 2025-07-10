@@ -4,6 +4,7 @@ import Department from "../models/department.model.js";
 import MedicalRecord from "../models/medicalRecord.model.js";
 import { isDoctorAvailable } from "../lib/utils/checkDoctorAvailability.js";
 import mongoose from "mongoose";
+import Prescription from "../models/prescription.model.js";
 
 export const createMedicalRecord = async (req, res) => {
   const {
@@ -58,6 +59,43 @@ export const createMedicalRecord = async (req, res) => {
         .status(400)
         .json({ error: "Doctor is not available at this time" });
     }
+    if (prescriptions && prescriptions.length > 0) {
+      const uniquePrescriptionIds = [
+        ...new Set(prescriptions.map((id) => id.toString())),
+      ];
+      if (uniquePrescriptionIds.length !== prescriptions.length) {
+        return res.status(400).json({
+          error: "Duplicate prescription IDs found in request",
+        });
+      }
+
+      const validPrescriptions = await Prescription.find({
+        _id: { $in: prescriptions },
+        patientId,
+        doctorId,
+        isDeleted: false,
+      });
+
+      if (validPrescriptions.length !== prescriptions.length) {
+        return res.status(400).json({
+          error:
+            "One or more prescriptions are invalid, deleted, or not associated with the given patient/doctor",
+        });
+      }
+
+      const alreadyLinked = await MedicalRecord.findOne({
+        prescriptions: { $in: prescriptions },
+        isDeleted: false,
+      });
+
+      if (alreadyLinked) {
+        return res.status(400).json({
+          error:
+            "One or more prescriptions are already linked to a medical record",
+        });
+      }
+    }
+
     const newRecord = new MedicalRecord({
       patientId,
       doctorId,
@@ -195,6 +233,47 @@ export const updateMedicalRecord = async (req, res) => {
         return res.status(400).json({ error: "Invalid departmentId" });
       }
     }
+    if (updateFields.prescriptions && updateFields.prescriptions.length > 0) {
+      const uniqueIds = [
+        ...new Set(updateFields.prescriptions.map((id) => id.toString())),
+      ];
+      if (uniqueIds.length !== updateFields.prescriptions.length) {
+        return res
+          .status(400)
+          .json({ error: "Duplicate prescription IDs in request" });
+      }
+
+      const patientIdToUse =
+        updateFields.patientId || record.patientId.toString();
+      const doctorIdToUse = updateFields.doctorId || record.doctorId.toString();
+
+      const validPrescriptions = await Prescription.find({
+        _id: { $in: updateFields.prescriptions },
+        patientId: patientIdToUse,
+        doctorId: doctorIdToUse,
+        isDeleted: false,
+      });
+
+      if (validPrescriptions.length !== updateFields.prescriptions.length) {
+        return res.status(400).json({
+          error:
+            "One or more prescriptions are invalid, deleted, or not associated with the patient/doctor",
+        });
+      }
+
+      const alreadyLinked = await MedicalRecord.findOne({
+        _id: { $ne: id },
+        prescriptions: { $in: updateFields.prescriptions },
+        isDeleted: false,
+      });
+
+      if (alreadyLinked) {
+        return res.status(400).json({
+          error:
+            "One or more prescriptions are already linked to another medical record",
+        });
+      }
+    }
 
     Object.assign(record, updateFields);
     await record.save();
@@ -251,7 +330,6 @@ export const uploadReports = async (req, res) => {
     const uniqueAttachments = attachments.filter(
       (att) => !existingAttachments.includes(att)
     );
-    
 
     if (uniqueAttachments.length === 0) {
       return res.status(400).json({

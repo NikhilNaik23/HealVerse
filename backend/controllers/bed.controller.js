@@ -123,8 +123,8 @@ export const updateBedById = async (req, res) => {
 };
 
 export const assignBedToPatient = async (req, res) => {
-  const { id: bedId } = req.params;
-  const { patientId, roomId } = req.body;
+  const { id: patientId } = req.params;
+  const { bedId, roomId } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(patientId)) {
     return res.status(400).json({ error: "Invalid Patient ID" });
@@ -159,6 +159,7 @@ export const assignBedToPatient = async (req, res) => {
     }
 
     bed.patientId = patient._id;
+    bed.isOccupied = true;
     await bed.save();
 
     res

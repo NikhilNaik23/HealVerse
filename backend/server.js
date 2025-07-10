@@ -16,6 +16,7 @@ import prescriptionRoute from "./routes/prescription.route.js";
 import emergencyPatientRoute from "./routes/emergencyPatient.route.js";
 import roomRoute from "./routes/room.route.js";
 import bedRoute from "./routes/bed.route.js";
+import treatmentRoute from "./routes/treatment.route.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 connectDB();
 
+// app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use("/api/", authRoute);
@@ -38,6 +40,7 @@ app.use("/api/prescriptions/", prescriptionRoute);
 app.use("/api/emergency-patients/", emergencyPatientRoute);
 app.use("/api/rooms/", roomRoute);
 app.use("/api/beds/", bedRoute);
+app.use("/api/treatment/", treatmentRoute);
 
 app.listen(PORT, () => {
   console.log(`The app is running at http://localhost:${PORT}`);

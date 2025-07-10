@@ -41,6 +41,11 @@ const prescriptionSchema = new mongoose.Schema(
             trim: true,
             required: true,
           },
+          duration: {
+            type: String,
+            trim: true,
+            required: true,
+          },
         },
       ],
       required: true,
@@ -61,11 +66,11 @@ const prescriptionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    isDeleted:{
-      type:Boolean,
-      default:false,
-      select:false,
-    }
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      select: false,
+    },
   },
   { timestamps: true }
 );

@@ -18,13 +18,16 @@ const medicineSchema = Joi.object({
   frequency: Joi.string().trim().required().messages({
     "string.empty": "Frequency is required",
   }),
+  duration: Joi.string().trim().required().messages({
+    "string.empty": "Frequency is required",
+  }),
 });
 
 export const prescriptionSchema = Joi.object({
   patientId: objectId.required().messages({
     "any.invalid": "Invalid Patient ID",
   }),
-  doctorId: objectId.required().messages({
+  doctorId: objectId.optional().messages({
     "any.invalid": "Invalid Doctor ID",
   }),
   appointmentId: objectId.required().messages({
@@ -40,9 +43,6 @@ export const prescriptionSchema = Joi.object({
   advice: Joi.string().trim().max(1000).required().messages({
     "string.empty": "Advice is required",
     "string.max": "Advice must be under 1000 characters",
-  }),
-  uploadedBy: objectId.required().messages({
-    "any.invalid": "Invalid Staff ID (uploadedBy)",
   }),
   issuedDate: Joi.date(),
 });

@@ -47,7 +47,7 @@ router.post(
 // @route   POST /api/emergency-patients/:id/assignDoctor
 // @desc    Assign a doctor to an emergency patient case
 // @access  Admin, Emergency Staff, Receptionist (Private)
-router.post(
+router.patch(
   "/:id/assignDoctor",
   protectRoute,
   authorizeRoles("admin", "emergencyStaff", "receptionist"),

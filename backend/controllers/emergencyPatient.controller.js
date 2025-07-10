@@ -38,6 +38,20 @@ export const createEmergencyPatient = async (req, res) => {
   }
 
   try {
+    const existing = await EmergencyPatient.findOne({
+      name,
+      phoneNumber,
+      triageLevel,
+      status: "waiting",
+      isEscalated: false,
+    });
+
+    if (existing) {
+      return res
+        .status(409)
+        .json({ error: "Emergency patient already exists in waiting queue" });
+    }
+
     const emergencyPatient = await EmergencyPatient.create({
       name,
       age,
@@ -49,7 +63,7 @@ export const createEmergencyPatient = async (req, res) => {
       assignedDoctorId,
       status,
       notes,
-      createdBy: staffId,
+      createdBy: staffId._id,
     });
     return res
       .status(200)

@@ -157,7 +157,7 @@ export const updatePrescription = async (req, res) => {
   const staffId = req.user?.profile?._id;
   const role = req.user?.profile?.role;
   const data = req.body;
-
+  
   try {
     const staff = await Staff.findById(staffId);
     if (!staff || !staff.isActive) {

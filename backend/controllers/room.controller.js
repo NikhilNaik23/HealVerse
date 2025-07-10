@@ -176,7 +176,7 @@ export const getAllRooms = async (req, res) => {
     if (departmentId) filter.departmentId = departmentId;
     let rooms = await Room.find(filter)
       .populate("bedList")
-      .populate("equipmentList")
+      // .populate("equipmentList")
       .populate("inChargeStaffId", "name role")
       .populate("departmentId", "name");
     if (isOccupied !== undefined) {

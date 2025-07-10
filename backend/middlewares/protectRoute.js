@@ -108,7 +108,9 @@ export const patientOnly = (req, res, next) => {
   const user = req.user;
 
   if (!user || user.auth.role !== "Patient") {
-    return res.status(403).json({ message: "Access denied: Patient access only" });
+    return res
+      .status(403)
+      .json({ message: "Access denied: Patient access only" });
   }
 
   if (!user.profile || !user.profile._id) {

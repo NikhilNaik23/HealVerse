@@ -20,6 +20,7 @@ const treatmentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    prescriptionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Prescription" }],
     prescribedMedications: {
       type: [
         {
@@ -67,5 +68,8 @@ const treatmentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+treatmentSchema.index({ treatmentDate: 1 });
+treatmentSchema.index({ patientId: 1 });
+
 const Treatment = mongoose.model("Treatment", treatmentSchema);
 export default Treatment;

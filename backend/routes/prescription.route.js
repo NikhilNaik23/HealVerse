@@ -32,7 +32,7 @@ router.post(
 // @route GET /api/prescriptions/
 // @desc get all presciptions
 // @access Nurse/Admin/Private
-router.post(
+router.get(
   "/",
   protectRoute,
   authorizeRoles("nurse", "admin"),
