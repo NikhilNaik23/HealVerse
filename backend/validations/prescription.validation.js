@@ -1,13 +1,5 @@
 import Joi from "joi";
-import mongoose from "mongoose";
-
-const objectId = Joi.string().custom((value, helpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.error("any.invalid");
-  }
-  return value;
-}, "ObjectId Validation");
-
+import { objectId } from "./objectId.validation.js";
 const medicineSchema = Joi.object({
   name: Joi.string().trim().required().messages({
     "string.empty": "Medicine name is required",

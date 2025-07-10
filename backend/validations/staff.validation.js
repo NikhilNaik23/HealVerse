@@ -1,13 +1,7 @@
 import Joi from "joi";
-import mongoose from "mongoose";
+import { objectId } from "./objectId.validation.js";
 
-// Helper: validate MongoDB ObjectId
-const objectId = Joi.string().custom((value, helpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.error("any.invalid");
-  }
-  return value;
-}, "ObjectId Validation");
+
 
 const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const validDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

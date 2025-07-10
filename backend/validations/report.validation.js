@@ -1,12 +1,5 @@
 import Joi from "joi";
-import mongoose from "mongoose";
-
-const objectId = Joi.string().custom((value, helpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    helpers.error("any.invalid");
-  }
-  return value;
-}, "ObjectId validation");
+import { objectId } from "./objectId.validation.js";
 
 const tests = [
   "blood_test",

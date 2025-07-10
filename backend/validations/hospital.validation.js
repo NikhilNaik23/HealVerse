@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { objectId } from "./objectId.validation.js";
 export const hospitalValidationSchema = Joi.object({
   name: Joi.string().required().messages({
     "string.empty": "Hospital name is required.",
@@ -24,8 +25,8 @@ export const hospitalValidationSchema = Joi.object({
     .messages({
       "object.base": "contactDetails is required",
     }),
-  directorId: Joi.string().hex().length(24).optional().messages({
-    "string.length": "Director ID must be 24 hex characters.",
+  directorId: objectId.optional().messages({
+    "any.invalid": "Invalid Staff ID",
   }),
   establishedDate: Joi.date().optional(),
 });
