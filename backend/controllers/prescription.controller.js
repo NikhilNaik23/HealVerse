@@ -3,6 +3,8 @@ import Doctor from "../models/doctor.model.js";
 import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
 import Staff from "../models/staff.model.js";
+import Admission from "../models/admission.model.js";
+import { addBillingItemToAdmissionBill } from "../lib/utils/billing.helper.js";
 
 export const createPrescription = async (req, res) => {
   const staffId = req.user?.profile?._id;
@@ -82,6 +84,24 @@ export const createPrescription = async (req, res) => {
     });
 
     await prescription.save();
+
+    try {
+      const admission = await Admission.findOne({
+        patientId,
+        status: "admitted",
+      });
+
+      if (admission) {
+        await addBillingItemToAdmissionBill(admission._id, {
+          service: "prescription",
+          referenceId: prescription._id,
+          description: "Prescription Charges",
+          cost: 500, 
+        });
+      }
+    } catch (billingError) {
+      console.error("Billing Integration Error:", billingError.message);
+    }
 
     return res.status(201).json({
       message: "Prescription created successfully",

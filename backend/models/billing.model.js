@@ -1,5 +1,27 @@
 import mongoose from "mongoose";
-const billingSchema = new mongoose.Schema(
+
+const billingItemSchema = new mongoose.Schema({
+  service: {
+    type: String,
+    required: true,
+    enum: ["admission", "treatment", "prescription", "report", "surgery"],
+  },
+  referenceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  },
+  description: String,
+  cost: {
+    type: Number,
+    required: true,
+  },
+  addedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const billSchema = new mongoose.Schema(
   {
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -10,60 +32,49 @@ const billingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admission",
       required: true,
+      unique: true,
     },
-    items: {
-      type: [
-        {
-          service: {
-            type: String,
-            required: true,
-          },
-          cost: {
-            type: Number,
-            required: true,
-          },
-        },
-      ],
-      validate: [
-        (arr) => arr.length > 0,
-        "At least one billing item is required",
-      ],
-    },
+    items: [billingItemSchema],
     totalAmount: {
       type: Number,
-      required: true,
-    },
-    paidAmount: {
-      type: Number,
-      required: true,
-    },
-    paymentMethod: {
-      type: String,
-      enum: ["cash", "card", "upi"],
-      default: "cash",
+      default: 0,
     },
     status: {
       type: String,
-      enum: ["paid", "pending"],
-      default: "pending",
+      enum: ["open", "finalized", "paid"],
+      default: "open",
+    },
+    generatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+    },
+    paidAmount: {
+      type: Number,
+      default: 0,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "card", "upi", "insurance"],
+    },
+    invoiceNumber: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    notes: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-billingSchema.pre("save", function (next) {
+billSchema.pre("save", function (next) {
   this.totalAmount = this.items.reduce((acc, item) => acc + item.cost, 0);
-  if (this.paidAmount >= this.totalAmount) {
-    this.status = "paid";
-  } else {
-    this.status = "pending";
-  }
+  this.status = this.paidAmount >= this.totalAmount ? "paid" : this.status;
   next();
 });
 
-billingSchema.path("paidAmount").validate(function (value) {
-  return value <= this.totalAmount;
-}, "Paid amount cannot exceed total amount");
+const Bill = mongoose.model("Bill", billSchema);
 
-const Billing = mongoose.model("Billing", billingSchema);
-export default Billing;
+export default Bill;

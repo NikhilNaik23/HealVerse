@@ -2,7 +2,8 @@ import Patient from "../models/patient.model.js";
 import Doctor from "../models/doctor.model.js";
 import Report from "../models/report.model.js";
 import Staff from "../models/staff.model.js";
-import axios from "axios";
+import Admission from "../models/admission.model.js";
+import { addBillingItemToAdmissionBill } from "../lib/utils/billing.helper.js";
 
 export const createReport = async (req, res) => {
   const { type, patientId, doctorId, notes } = req.body;
@@ -38,6 +39,23 @@ export const createReport = async (req, res) => {
       notes,
       uploadedBy: req.user.auth?._id,
     });
+    try {
+      const admission = await Admission.findOne({
+        patientId,
+        status: "admitted",
+      });
+
+      if (admission) {
+        await addBillingItemToAdmissionBill(admission._id, {
+          service: "report",
+          referenceId: report._id,
+          description: `${type} Report Charges`,
+          cost: 300,
+        });
+      }
+    } catch (billingError) {
+      console.error("Billing Error (Report):", billingError.message);
+    }
     res.status(201).json({ message: "Report created successfully", report });
     return;
   } catch (error) {

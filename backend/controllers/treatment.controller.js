@@ -1,7 +1,9 @@
+import Admission from "../models/admission.model.js";
 import Patient from "../models/patient.model.js";
 import Prescription from "../models/prescription.model.js";
 import Room from "../models/room.model.js";
 import Treatment from "../models/treatment.model.js";
+import { addBillingItemToAdmissionBill } from "../lib/utils/billing.helper.js";
 
 export const createTreatment = async (req, res) => {
   let {
@@ -85,6 +87,23 @@ export const createTreatment = async (req, res) => {
       followDate,
       operationRoomId,
     });
+
+    try {
+      const admission = await Admission.findOne({
+        patientId,
+        status: "admitted",
+      });
+
+      if (admission) {
+        await addBillingItemToAdmissionBill(admission._id, {
+          service: "treatment",
+          referenceId: treatment._id,
+          description: "Treatment Charges",
+        });
+      }
+    } catch (billingErr) {
+      console.error("Billing Integration Error:", billingErr.message);
+    }
 
     return res.status(201).json({
       message: "Treatment created successfully",
