@@ -53,7 +53,6 @@ const surgerySchema = new mongoose.Schema(
     },
     operationEndTime: {
       type: Date,
-      required: true,
     },
     status: {
       type: String,
@@ -65,11 +64,16 @@ const surgerySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );
 
-surgerySchema.methods.getDurationMinutes = function() {
+surgerySchema.methods.getDurationMinutes = function () {
   return (this.operationEndTime - this.operationStartTime) / (1000 * 60);
 };
 surgerySchema.virtual("durationFormatted").get(function () {
@@ -79,13 +83,12 @@ surgerySchema.virtual("durationFormatted").get(function () {
   return `${hours}h ${minutes}m`;
 });
 
-
-
 surgerySchema.pre("save", function (next) {
-  if (this.operationEndTime <= this.operationStartTime) {
+  if (this.operationEndTime && this.operationEndTime <= this.operationStartTime) {
     return next(new Error("Operation end time must be after start time"));
   }
   next();
 });
+
 const Surgery = mongoose.model("Surgery", surgerySchema);
 export default Surgery;

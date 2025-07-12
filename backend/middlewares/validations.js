@@ -22,6 +22,7 @@ import { treatmentSchema } from "../validations/treatment.validation.js";
 import { roomSchema } from "../validations/room.validation.js";
 import { bedValidateSchema } from "../validations/bed.validation.js";
 import { admissionValidationSchema } from "../validations/admission.validation.js";
+import { surgeryValidationSchema } from "../validations/surgery.validation.js";
 
 const createValidationMiddleware = (schema) => (req, res, next) => {
   const { error } = schema.validate(req.body, { abortEarly: false });
@@ -82,4 +83,7 @@ export const validateRoom = createValidationMiddleware(roomSchema);
 export const validateBed = createValidationMiddleware(bedValidateSchema);
 export const validateAdmission = createValidationMiddleware(
   admissionValidationSchema
+);
+export const validateSurgery = createValidationMiddleware(
+  surgeryValidationSchema
 );

@@ -15,6 +15,7 @@ import treatmentRoute from "../routes/treatment.route.js";
 import admissionRoute from "../routes/admission.route.js";
 import billRoute from "../routes/billing.route.js";
 import paymentRoute from "../routes/payment.route.js";
+import surgeryRoute from "../routes/surgery.route.js";
 
 export const registerRoutes = (app) => {
   app.use("/api/", authRoute);
@@ -33,5 +34,6 @@ export const registerRoutes = (app) => {
   app.use("/api/treatment/", treatmentRoute);
   app.use("/api/admissions/", admissionRoute);
   app.use("/api/bills", billRoute);
-  app.use("/api/payment",paymentRoute);
+  app.use("/api/payment", paymentRoute);
+  app.use("/api/surgery/", surgeryRoute);
 };
