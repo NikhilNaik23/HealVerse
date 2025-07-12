@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { objectId } from "./objectId.validation.js";
 
-export const equipmentSchema = Joi.object({
+export const equipmentValidationSchema = Joi.object({
   name: Joi.string()
     .valid(
       "defibrillator",
@@ -17,7 +17,9 @@ export const equipmentSchema = Joi.object({
     )
     .required(),
   description: Joi.string().optional(),
-  status: Joi.string().valid("working", "maintenance", "damaged", "in_use").default("working"),
+  status: Joi.string()
+    .valid("working", "maintenance", "damaged", "in_use")
+    .default("working"),
   assignedRoom: objectId.allow(null),
   purchaseDate: Joi.date().optional(),
-});
+}).min(1);

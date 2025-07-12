@@ -16,6 +16,7 @@ import admissionRoute from "../routes/admission.route.js";
 import billRoute from "../routes/billing.route.js";
 import paymentRoute from "../routes/payment.route.js";
 import surgeryRoute from "../routes/surgery.route.js";
+import equipmentRoute from "../routes/equipment.route.js";
 
 export const registerRoutes = (app) => {
   app.use("/api/", authRoute);
@@ -36,4 +37,5 @@ export const registerRoutes = (app) => {
   app.use("/api/bills", billRoute);
   app.use("/api/payment", paymentRoute);
   app.use("/api/surgery/", surgeryRoute);
+  app.use("/api/equipments/", equipmentRoute);
 };
